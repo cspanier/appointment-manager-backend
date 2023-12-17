@@ -40,12 +40,6 @@ function(shift_add_test target)
     remove_definitions(-D_MBCS)
   endif()
 
-  if(NOT "${PROJECT_VERSION}" STREQUAL "")
-    set(build_file_suffix ".${SHIFT_SYSTEM_PROCESSOR}.${SHIFT_COMPILER_ACRONYM}")
-  else()
-    set(build_file_suffix "")
-  endif()
-
   if(NOT sources)
     message(WARNING "No test cases found in folder(s) ${source_roots}")
   endif()
@@ -115,7 +109,6 @@ function(shift_add_test target)
     PRIVATE "$<$<CONFIG:RelWithDebInfo>:BUILD_CONFIG_RELWITHDEBINFO>"
     PRIVATE SHIFT_TEST_MODULE_NAME=${target}
     PRIVATE BUILD_BIN_FOLDER="bin"
-    PRIVATE BUILD_FILE_SUFFIX="${build_file_suffix}"
   )
 
   if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
@@ -144,15 +137,15 @@ function(shift_add_test target)
       "${CMAKE_INSTALL_PREFIX}/${ARG_INSTALL_PREFIX}bin"
 
     RUNTIME_OUTPUT_NAME
-      "${target}${build_file_suffix}"
+      "${target}"
     RUNTIME_OUTPUT_NAME_DEBUG
-      "${target}${build_file_suffix}"
+      "${target}"
     RUNTIME_OUTPUT_NAME_MINSIZEREL
-      "${target}${build_file_suffix}"
+      "${target}"
     RUNTIME_OUTPUT_NAME_RELEASE
-      "${target}${build_file_suffix}"
+      "${target}"
     RUNTIME_OUTPUT_NAME_RELWITHDEBINFO
-      "${target}${build_file_suffix}"
+      "${target}"
 
     VS_WINDOWS_TARGET_PLATFORM_VERSION "${CMAKE_SYSTEM_VERSION}"
   )

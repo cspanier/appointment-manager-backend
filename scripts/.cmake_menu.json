@@ -1,9 +1,0 @@
-{
-    "config-base.json": true,
-    "config-overlay-address-sanitizer.json": false,
-    "config-overlay-skip-toolset-version-check.json": false,
-    "config-target-x86_64-linux-clang.json": true,
-    "config-target-x86_64-linux-gcc.json": false,
-    "config-target-x86_64-windows-vc143.json": false,
-    "config-user-buildserver.json": false
-}
