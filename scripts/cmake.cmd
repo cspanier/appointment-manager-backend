@@ -9,7 +9,7 @@ REM ############################################################################
 
 cls
 REM Change current working directory to the location of this script.
-cd %~dp0
+cd %~dp0../
 
 REM Check version of Python available in PATH.
 set PYTHON_MAJOR_VERSION=0
@@ -28,7 +28,7 @@ if "%1"=="" (
   REM Due to limitations in Batch file language we need to use a temporary file
   REM to communicate results from the Python script.
   set TEMP_ARGUMENTS_FILE=%TEMP%\cmake_arguments.txt
-  python cmake_menu.py "!TEMP_ARGUMENTS_FILE!" || exit /B 0
+  python scripts/cmake_menu.py "!TEMP_ARGUMENTS_FILE!" || exit /B 0
   set CONFIG_FILES=
   for /F "usebackq delims=" %%A in ("!TEMP_ARGUMENTS_FILE!") do (
     set CONFIG_FILES=!CONFIG_FILES! "%%A"
@@ -40,8 +40,8 @@ if "%1"=="" (
 
 REM Read all config files and query several specific settings that are needed
 REM early in this setup script.
-for /F "delims=| tokens=1,2,3,4 usebackq" %%i in (`python query_config.py -q prerequisites-path -q cpp-toolset -q cpp-toolset-version -q windows-sdk-version !CONFIG_FILES!`) do (
-  set PREREQUISITES_PATH=%%i/pip
+for /F "delims=| tokens=1,2,3,4 usebackq" %%i in (`python scripts/query_config.py -q python-packages-path -q cpp-toolset -q cpp-toolset-version -q windows-sdk-version !CONFIG_FILES!`) do (
+  set PYTHON_PACKAGES_PATH=%%i
   set CPP_TOOLSET=%%j
   set CPP_TOOLSET_VER=%%k
   set WinSDKVer=%%l
@@ -81,7 +81,9 @@ if "%CPP_TOOLSET%"=="msvc17" (
     echo * Calling vsdevcmd.bat to fix environment...
     REM ToDo: This code might choose the wrong path if multiple versions/editions are installed in parallel
     REM (e.g. Community and Professional edition).
-    for /f "tokens=*" %%i in ('vswhere -latest -version "[17.0,18.0)" -property installationPath') do (
+    REM ToDo: Finding vswhere.exe from a path containing spaces within the for statement seems to be broken somehow.
+    copy "c:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" scripts\
+    for /f "tokens=*" %%i in ('scripts\vswhere.exe -latest -version "[17.0,18.0)" -property installationPath') do (
       pushd !CD!
       if not exist "%%i\VC\Tools\MSVC\%CPP_TOOLSET_VER%" (
         echo Error: Missing Microsoft Visual C++ build tools version %CPP_TOOLSET_VER%.
@@ -100,8 +102,8 @@ if "%CPP_TOOLSET%"=="msvc17" (
 )
 
 :setup_venv
-if not exist "%PREREQUISITES_PATH%" (
-  echo Error: Path to Python prerequisites does not exist "%PREREQUISITES_PATH%"
+if not exist "%PYTHON_PACKAGES_PATH%" (
+  echo Error: Path to Python prerequisites does not exist "%PYTHON_PACKAGES_PATH%"
   set EXIT_CODE=10003
   goto :end
 )
@@ -112,10 +114,10 @@ if not exist %VENV_PATH% (
 echo * Entering Python virtual environment...
 call %VENV_PATH%/Scripts/activate.bat
 echo * Installing required Python modules...
-python -m pip install --no-index --find-links %PREREQUISITES_PATH% -r ./python_requirements.txt
+python -m pip install --no-index --find-links %PYTHON_PACKAGES_PATH% -r scripts/python_requirements.txt
 
 REM Call Python cmake script and propagate exit code.
-python cmake.py !CONFIG_FILES!
+python scripts/cmake.py !CONFIG_FILES!
 set EXIT_CODE=%ERRORLEVEL%
 goto :end
 

@@ -157,12 +157,17 @@ class Builder:
 
         vcpkg_assets_cache_path = Path(os.path.expanduser(
             self.config['vcpkg-assets-cache-path'].replace('\\', '/')))
-        if not vcpkg_assets_cache_path.exists():
-            raise RuntimeError(
-                f'The vcpkg assets cache path "{vcpkg_assets_cache_path}" doesn\'t exist')
         if ',;' in str(vcpkg_assets_cache_path):
             raise RuntimeError(f'The vcpkg assets cache path "{vcpkg_assets_cache_path}" ' +
                                'must neither contain comma (",") nor semicolon (";") characters.')
+        if not vcpkg_assets_cache_path.exists():
+            print(f'Creating non-existent vcpkg assets cache path "{vcpkg_assets_cache_path}"... ', end='')
+            try:
+                vcpkg_assets_cache_path.mkdir(parents=True, exist_ok=True)
+                print(f'OK')
+            except Exception as ex:
+                print(f'Error: Cannot create path.')
+                exit(1)
         if self.config['vcpkg-assets-cache-readonly']:
             vcpkg_asset_cache_rw = 'read;x-block-origin'
         else:
@@ -177,12 +182,17 @@ class Builder:
             .replace('${target-system}', self.target_system)
             .replace('${vendor}', self.vendor)
             .replace('${cpp-runtime}', self.cpp_runtime)))
-        if not vcpkg_binary_cache_path.exists():
-            raise RuntimeError(
-                f'The vcpkg binary cache path "{vcpkg_binary_cache_path}" doesn\'t exist')
         if ',;' in str(vcpkg_binary_cache_path):
             raise RuntimeError(f'The vcpkg binary cache path "{vcpkg_binary_cache_path}" ' +
                                'must neither contain comma (",") nor semicolon (";") characters.')
+        if not vcpkg_binary_cache_path.exists():
+            print(f'Creating non-existent vcpkg binary cache path "{vcpkg_binary_cache_path}"... ', end='')
+            try:
+                vcpkg_binary_cache_path.mkdir(parents=True, exist_ok=True)
+                print(f'OK')
+            except Exception as ex:
+                print(f'Error: Cannot create path.')
+                exit(1)
         if self.config['vcpkg-binary-cache-readonly']:
             vcpkg_binary_cache_rw = 'read'
         else:
@@ -327,7 +337,8 @@ class Builder:
 
     def check_vcpkg(self):
         print('Checking availability and version of vcpkg... ', end='')
-        self.vcpkg_exe_path = shutil.which(self.vcpkg_path / 'vcpkg')
+        vcpkg_exe = 'vcpkg.exe' if platform.system() == 'Windows' else 'vcpkg'
+        self.vcpkg_exe_path = shutil.which(self.vcpkg_path / vcpkg_exe)
         if not self.vcpkg_exe_path is None:
             self.vcpkg_exe_path = Path(self.vcpkg_exe_path)
             command = [self.vcpkg_exe_path, '--version']
